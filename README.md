@@ -1,4 +1,4 @@
-# Analise de procura e demografia UEM 2026
+## ARQUITECTURA DE UM SISTEMA INTELIGENTE DE APOIO À DECISÃO NA GESTÃO DOS EXAMES DE ADMISSÃO DA UNIVERSIDADE EDUARDO MONDLANE
 
 Projeto de analise exploratoria dos candidatos e da procura por cursos da UEM para 2026. O trabalho e desenvolvido em notebooks Jupyter, usando planilhas Excel como entrada e arquivos CSV como resultados consolidados.
 
