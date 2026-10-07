@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Dados de entrada e bases processadas podem conter dados pessoais.
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*.parquet
+data/processed/*.xlsx
+
+# Relatórios, gráficos e ficheiros temporários gerados localmente.
+outputs/
+output.png

@@ -9,7 +9,7 @@
 | Dataset de saída | `data/processed/candidatos_uem.parquet` |
 | Notebook responsável | `notebooks/dadosTeste_limpo.ipynb` |
 | Unidade de análise | Um registro por candidato |
-| Versão de referência | Branch `feature/tratamento-valores-nulos` |
+| Versão de referência | Base local de 2025/2026 gerada pelo notebook de limpeza; não distribuída no repositório |
 | Referência temporal | Processo de admissão 2025/2026 |
 
 ## 2. Objetivo
@@ -23,7 +23,7 @@ A tabela abaixo documenta os campos identificados no fluxo atual do notebook. A 
 | Campo | Tipo esperado | Descrição funcional | Tratamento no notebook |
 |---|---|---|---|
 | `Ano` | Inteiro | Ano do processo de admissão. | Mantido da fonte original. |
-| `candidato_codigo` | Inteiro | Código único atribuído ao candidato no processo. | Mantido da fonte de tratamento; identifica o candidato e não representa o código do curso. |
+| `candidato_codigo` | Inteiro | Código atribuído ao candidato no processo. | Mantido da fonte de tratamento; identifica a candidatura e não representa o código do curso. Presente no esquema local do Parquet. |
 | `apelido` | Texto | Apelido ou sobrenome do candidato. | Mantido da fonte original. |
 | `nome` | Texto | Nome próprio ou nome completo do candidato. | Mantido da fonte original. |
 | `Sexo` | Texto/categórico | Sexo informado pelo candidato. | Remoção de espaços nas extremidades e conversão para formato de título. |
@@ -42,12 +42,12 @@ A tabela abaixo documenta os campos identificados no fluxo atual do notebook. A 
 | `AnocPU` | Inteiro | Ano de conclusão do ensino pré-universitário. | Mantido da fonte de tratamento. |
 | `distrito_nascimento` | Texto | Distrito de nascimento do candidato. | Registros recodificados como estrangeiros recebem `Estrangeiro`; texto normalizado. |
 | `distrito_residencia` | Texto | Distrito de residência do candidato. | Remoção de espaços nas extremidades e conversão para formato de título. |
-| `UEM_Cod_Opc1` | Numérico inteiro | Código da primeira opção de curso na UEM. | Convertido para inteiro. |
-| `UEM_Opc1` | Texto | Descrição da primeira opção de curso na UEM. | Remoção de espaços nas extremidades e conversão para formato de título. |
+| `UEM_Cod_Opc1` | Numérico inteiro | Código da primeira opção de curso na UEM. | Convertido para inteiro; a validação do notebook exige valor não nulo nos registos analisados. |
+| `UEM_Opc1` | Texto | Descrição da primeira opção de curso na UEM. | Remoção de espaços nas extremidades, conversão para formato de título e remoção do sufixo `- Uem` / `- UEM`. |
 | `UEM_Cod_Opc2` | Numérico inteiro | Código da segunda opção de curso na UEM. | Valores ausentes preenchidos com `0` e convertidos para inteiro. |
-| `UEM_Opc2` | Texto | Descrição da segunda opção de curso na UEM. | Valores ausentes preenchidos com `Sem Opcao`; texto normalizado. |
+| `UEM_Opc2` | Texto | Descrição da segunda opção de curso na UEM. | Valores ausentes preenchidos com `Sem Opcao`; texto normalizado e sufixo `- Uem` removido. |
 
-> A branch de tratamento apresenta 24 campos no resultado analisado. Os campos de código devem ser interpretados conforme a finalidade: `candidato_codigo` identifica o candidato, `cod_preUni` identifica a instituição pré-universitária e `UEM_Cod_Opc1`/`UEM_Cod_Opc2` identificam as opções de curso. Eles não devem ser misturados em análises de frequência ou chaves de curso.
+> A base local analisada apresenta 24 campos. Os campos de código devem ser interpretados conforme a finalidade: `candidato_codigo` identifica a candidatura, `cod_preUni` identifica a instituição pré-universitária e `UEM_Cod_Opc1`/`UEM_Cod_Opc2` identificam as opções de curso. Eles não devem ser misturados em análises de frequência ou chaves de curso.
 
 ## 4. Campos removidos
 
@@ -99,21 +99,20 @@ A tabela abaixo documenta os campos identificados no fluxo atual do notebook. A 
    - `UEM_Opc2`
 4. `UEM_Cod_Opc2` recebe `0` quando está ausente.
 5. `UEM_Opc2` recebe `Sem Opcao` quando está ausente.
-6. Os campos textuais selecionados são normalizados com `strip().title()`.
-7. Os campos `TipoEst` e `Classif` são removidos.
-8. O resultado é exportado para `data/processed/candidatos_uem.parquet`.
+6. Os nomes dos cursos em `UEM_Opc1` e `UEM_Opc2` passam por normalização para remover o sufixo final `- Uem`, mantendo o formato `Nome do curso - Diurno` em vez de `Nome do curso - Diurno - Uem`.
+7. Os campos textuais selecionados são normalizados com `strip().title()`.
+8. Os campos `TipoEst` e `Classif` são removidos.
+9. O resultado é exportado para `data/processed/candidatos_uem.parquet`.
 
 ## 6. Dicionário específico dos campos de código
 
 | Campo | Papel | Pode ser nulo? | Regra de interpretação |
 |---|---|---:|---|
-| `candidato_codigo` | Identificador do candidato | Não observado na saída da branch | Chave do candidato no processo; não é código de curso. |
+| `candidato_codigo` | Identificador do candidato | Não; zero nulos observados nos dados locais validados | Identificador da candidatura; não é código de curso. |
 | `cod_preUni` | Identificador da instituição pré-universitária | Sim; 29 nulos observados na branch | Ausência significa que a instituição não possui código informado ou não foi associada. |
-| `UEM_Cod_Opc1` | Código da primeira opção UEM | Não observado entre os registros filtrados | Relacionar com o cadastro oficial de cursos da UEM. |
+| `UEM_Cod_Opc1` | Código da primeira opção UEM | Não nos registos que passam pela validação do notebook | Relacionar com o cadastro oficial de cursos da UEM. |
 | `UEM_Cod_Opc2` | Código da segunda opção UEM | Pode ser ausente na origem | Ausência é convertida para `0`, que representa `Sem Opcao`. |
 
 O campo de código incorporado pela branch de tratamento, `candidato_codigo`, deve aparecer separadamente de `cod_preUni`. O primeiro identifica a pessoa/candidatura; o segundo identifica a instituição de proveniência.
 
  
-
-
